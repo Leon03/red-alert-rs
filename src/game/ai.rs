@@ -1,5 +1,5 @@
 use crate::game::building::{BuildQueue, BuildingType};
-use crate::game::combat::{Attack, Health, UnitType};
+use crate::game::combat::{Attack, Health};
 use crate::game::economy::{Harvester, OreField, PlayerMoney, Refinery};
 use crate::game::fog::VisionSource;
 use crate::game::MapSize;
@@ -76,8 +76,8 @@ pub fn ai_economy_system(
     mut ai: ResMut<AIPlayer>,
     money: Res<PlayerMoney>,
     q_harvesters: Query<&Harvester>,
-    q_refineries: Query<&Refinery>,
-    q_ore: Query<&OreField>,
+    q_refineries: Query<(&Refinery, &Transform)>,
+    q_ore: Query<(&OreField, &Transform)>,
     mut commands: Commands,
     map: Res<MapSize>,
 ) {
@@ -92,7 +92,7 @@ pub fn ai_economy_system(
     // Build more harvesters if we have refineries but few harvesters
     if refinery_count > 0 && harvester_count < refinery_count * 2 && money.amount >= 1400 {
         // Spawn harvester near first refinery
-        if let Some(refinery_transform) = q_refineries.iter().next() {
+        if let Some((_, refinery_transform)) = q_refineries.iter().next() {
             commands.spawn((
                 crate::game::Unit,
                 Harvester {
@@ -125,7 +125,7 @@ pub fn ai_economy_system(
 
     // Build refinery if we have ore but no refinery
     if refinery_count == 0 && ore_fields > 0 && money.amount >= 2000 {
-        if let Some(ore_transform) = q_ore.iter().next() {
+        if let Some((_, ore_transform)) = q_ore.iter().next() {
             commands.spawn((
                 Refinery {
                     processing_rate: 100,
@@ -156,8 +156,7 @@ pub fn ai_building_system(
     mut ai: ResMut<AIPlayer>,
     money: Res<PlayerMoney>,
     mut build_queue: ResMut<BuildQueue>,
-    q_buildings: Query<&crate::game::building::Building>,
-    map: Res<MapSize>,
+    q_buildings: Query<(&crate::game::building::Building, &Transform)>,
     blocked: Res<crate::game::obstacle::BlockedTiles>,
 ) {
     ai.last_build_time += time.delta_seconds();
@@ -180,7 +179,7 @@ pub fn ai_building_system(
 
     if money.amount >= cost {
         // Find placement spot near existing buildings
-        let placement = find_ai_building_spot(building_type, &q_buildings, &map, &blocked);
+        let placement = find_ai_building_spot(building_type, &q_buildings, &blocked);
         if let Some(tile) = placement {
             build_queue
                 .queue
@@ -198,22 +197,23 @@ pub fn ai_building_system(
 /// Find a valid placement spot for AI building near existing structures.
 fn find_ai_building_spot(
     building_type: BuildingType,
-    q_buildings: &Query<&crate::game::building::Building>,
-    map: &MapSize,
+    q_buildings: &Query<(&crate::game::building::Building, &Transform)>,
     blocked: &crate::game::obstacle::BlockedTiles,
 ) -> Option<(u32, u32)> {
     let (w, h) = building_type.size_tiles();
 
     // Try spots near existing buildings first
-    for building_transform in q_buildings.iter().map(|b| b.transform()) {
+    for (_, building_transform) in q_buildings.iter() {
         // We'd need Transform in the query - simplified
     }
 
-    // Fallback: scan from base corner
+    // Fallback: scan from base corner (assume 50x50 map)
+    let map_width = 50u32;
+    let map_height = 50u32;
     let start_x = 3;
     let start_y = 3;
-    for y in start_y..(map.height - h) {
-        for x in start_x..(map.width - w) {
+    for y in start_y..(map_height - h) {
+        for x in start_x..(map_width - w) {
             let mut can_place = true;
             for dy in 0..h {
                 for dx in 0..w {
@@ -244,7 +244,6 @@ pub fn ai_unit_production_system(
     q_barracks: Query<&Transform, With<crate::game::building::Building>>,
     q_units: Query<&crate::game::Unit>,
     mut commands: Commands,
-    map: Res<MapSize>,
 ) {
     // Count our units
     let unit_count = q_units.iter().count();
@@ -334,7 +333,6 @@ pub fn ai_unit_production_system(
 
 /// System: AI attack behavior - send units to enemy base.
 pub fn ai_attack_system(
-    ai: Res<AIPlayer>,
     mut q_ai_units: Query<(&mut crate::game::Movable, &Transform), With<crate::game::Unit>>,
     q_enemy_buildings: Query<&Transform, With<crate::game::building::Building>>,
     blocked: Res<crate::game::obstacle::BlockedTiles>,
