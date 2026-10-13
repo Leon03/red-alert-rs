@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::game::MapSize;
+use bevy::prelude::*;
 use std::collections::HashSet;
 
 /// Marks an entity as an obstacle that blocks a tile on the grid.

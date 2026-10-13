@@ -31,7 +31,10 @@ impl PartialOrd for Node {
 impl Ord for Node {
     // Reversed so that BinaryHeap (max-heap) behaves as a min-heap on f_cost.
     fn cmp(&self, other: &Self) -> Ordering {
-        other.f_cost.partial_cmp(&self.f_cost).unwrap_or(Ordering::Equal)
+        other
+            .f_cost
+            .partial_cmp(&self.f_cost)
+            .unwrap_or(Ordering::Equal)
     }
 }
 
@@ -185,7 +188,10 @@ mod tests {
         assert_eq!(*path.last().unwrap(), (0, 4));
         // No tile in the path should be blocked
         for tile in &path {
-            assert!(!blocked.contains(tile), "Path goes through blocked tile {tile:?}");
+            assert!(
+                !blocked.contains(tile),
+                "Path goes through blocked tile {tile:?}"
+            );
         }
     }
 

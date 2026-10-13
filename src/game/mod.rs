@@ -141,13 +141,8 @@ fn handle_click(
 
                 for (transform, mut movable) in q_units.iter_mut() {
                     let start_tile = world_to_tile(transform.translation, map.tile_size);
-                    let tile_path = find_path(
-                        start_tile,
-                        end_tile,
-                        &blocked.tiles,
-                        map.width,
-                        map.height,
-                    );
+                    let tile_path =
+                        find_path(start_tile, end_tile, &blocked.tiles, map.width, map.height);
                     // Convert tile path to world-space waypoints
                     let waypoints: Vec<Vec3> = tile_path
                         .iter()
