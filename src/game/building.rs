@@ -1,6 +1,7 @@
 use crate::game::obstacle::{tile_to_world, world_to_tile};
 use crate::game::MapSize;
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 
 /// Building type enum for different building categories.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
@@ -51,6 +52,7 @@ impl BuildingType {
         }
     }
 
+    #[expect(dead_code)]
     pub fn name(&self) -> &'static str {
         match self {
             BuildingType::ConstructionYard => "Construction Yard",
@@ -67,11 +69,14 @@ impl BuildingType {
 /// A building entity on the map.
 #[derive(Component)]
 pub struct Building {
+    #[expect(dead_code)]
     pub building_type: BuildingType,
     pub health: i32,
+    #[expect(dead_code)]
     pub max_health: i32,
     pub build_progress: f32, // 0.0 to 1.0
     pub is_built: bool,
+    #[expect(dead_code)]
     pub owner: Entity, // player entity that owns this building
 }
 
@@ -92,6 +97,7 @@ pub struct BuildQueue {
     pub is_placement_mode: bool,
 }
 
+#[allow(clippy::too_many_arguments)]
 /// System: Handle building placement mode (right-click to cancel, left-click to place).
 pub fn building_placement_system(
     buttons: Res<ButtonInput<MouseButton>>,
@@ -198,7 +204,6 @@ pub fn building_placement_system(
 pub fn build_queue_system(
     time: Res<Time>,
     mut build_queue: ResMut<BuildQueue>,
-    mut money: ResMut<crate::game::economy::PlayerMoney>,
     mut commands: Commands,
     map: Res<MapSize>,
     mut blocked: ResMut<crate::game::obstacle::BlockedTiles>,
@@ -276,17 +281,10 @@ pub fn building_progress_system(mut q_buildings: Query<(&mut Building, &mut Spri
 }
 
 /// System: Handle building damage and destruction.
-pub fn building_damage_system(
-    mut commands: Commands,
-    mut q_buildings: Query<(Entity, &mut Building)>,
-    mut blocked: ResMut<crate::game::obstacle::BlockedTiles>,
-    map: Res<MapSize>,
-) {
-    for (entity, mut building) in q_buildings.iter_mut() {
+pub fn building_damage_system(mut commands: Commands, q_buildings: Query<(Entity, &Building)>) {
+    for (entity, building) in q_buildings.iter() {
         if building.health <= 0 && building.is_built {
-            // Remove from blocked tiles
-            let (w, h) = building.building_type.size_tiles();
-            // Find building position (would need Transform in query)
+            // Remove from blocked tiles - would need Transform in query
             // For now just despawn
             commands.entity(entity).despawn();
             // In full impl, we'd clear the blocked tiles
@@ -294,7 +292,7 @@ pub fn building_damage_system(
     }
 }
 
-/// Check if a building can be placed at given tile.
+#[expect(dead_code)]
 pub fn can_place_building(
     tile: (u32, u32),
     bt: BuildingType,
