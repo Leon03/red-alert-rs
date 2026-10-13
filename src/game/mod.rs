@@ -1,17 +1,25 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
+pub mod obstacle;
+pub mod pathfinding;
+
+use obstacle::{tile_to_world, update_blocked_tiles, world_to_tile, BlockedTiles};
+use pathfinding::find_path;
+
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MapSize>()
             .init_resource::<Selection>()
+            .init_resource::<BlockedTiles>()
             .add_systems(Startup, spawn_camera)
             .add_systems(Startup, spawn_grid)
             .add_systems(Startup, spawn_test_units)
             .add_systems(Update, handle_click)
-            .add_systems(Update, move_units);
+            .add_systems(Update, move_units)
+            .add_systems(Update, update_blocked_tiles);
     }
 }
 
@@ -48,7 +56,8 @@ pub struct Unit;
 #[derive(Component)]
 pub struct Movable {
     pub speed: f32,
-    pub target: Option<Vec3>,
+    /// Waypoints (world-space) the unit should follow in order.
+    pub path: Vec<Vec3>,
 }
 
 fn spawn_camera(mut commands: Commands, map: Res<MapSize>) {
@@ -92,7 +101,7 @@ fn spawn_test_units(mut commands: Commands) {
             Unit,
             Movable {
                 speed: 80.0,
-                target: None,
+                path: Vec::new(),
             },
             SpriteBundle {
                 sprite: Sprite {
@@ -111,7 +120,8 @@ fn handle_click(
     buttons: Res<ButtonInput<MouseButton>>,
     q_windows: Query<&Window, With<PrimaryWindow>>,
     map: Res<MapSize>,
-    mut q_units: Query<(&mut Transform, &mut Movable), With<Unit>>,
+    blocked: Res<BlockedTiles>,
+    mut q_units: Query<(&Transform, &mut Movable), With<Unit>>,
     camera_q: Query<(&Camera, &GlobalTransform)>,
 ) {
     let Ok(window) = q_windows.get_single() else {
@@ -124,27 +134,52 @@ fn handle_click(
     if buttons.just_pressed(MouseButton::Left) {
         if let Some(cursor_pos) = window.cursor_position() {
             if let Some(world_pos) = camera.viewport_to_world_2d(cam_transform, cursor_pos) {
-                // 选中全部单位（简化版）
-                for (mut _transform, mut movable) in q_units.iter_mut() {
-                    movable.target = Some(world_pos.extend(0.0));
+                let end_tile = world_to_tile(world_pos.extend(0.0), map.tile_size);
+                if end_tile.0 >= map.width || end_tile.1 >= map.height {
+                    return;
                 }
-                let _ = &map;
+
+                for (transform, mut movable) in q_units.iter_mut() {
+                    let start_tile = world_to_tile(transform.translation, map.tile_size);
+                    let tile_path = find_path(
+                        start_tile,
+                        end_tile,
+                        &blocked.tiles,
+                        map.width,
+                        map.height,
+                    );
+                    // Convert tile path to world-space waypoints
+                    let waypoints: Vec<Vec3> = tile_path
+                        .iter()
+                        .map(|t| tile_to_world(*t, map.tile_size))
+                        .collect();
+                    movable.path = waypoints;
+                }
             }
         }
     }
 }
 
-/// 移动单位系统（当前未插入到 schedule，预留扩展）
+/// Move units along their waypoint paths.
 pub fn move_units(mut q_units: Query<(&mut Transform, &mut Movable), With<Unit>>, time: Res<Time>) {
     for (mut transform, mut movable) in q_units.iter_mut() {
-        if let Some(target) = movable.target {
-            let dir = target - transform.translation;
-            if dir.length() > 2.0 {
-                let step = dir.normalize() * movable.speed * time.delta_seconds();
-                transform.translation += step;
+        if movable.path.is_empty() {
+            continue;
+        }
+
+        let target = movable.path[0];
+        let dir = target - transform.translation;
+        if dir.length() > 2.0_f32 {
+            let step = dir.normalize() * movable.speed * time.delta_seconds();
+            // Don't overshoot
+            if step.length() >= dir.length() {
+                transform.translation = target;
             } else {
-                movable.target = None;
+                transform.translation += step;
             }
+        } else {
+            // Reached this waypoint, remove it
+            movable.path.remove(0);
         }
     }
 }
