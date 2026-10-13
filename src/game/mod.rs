@@ -10,7 +10,8 @@ impl Plugin for GamePlugin {
             .add_systems(Startup, spawn_camera)
             .add_systems(Startup, spawn_grid)
             .add_systems(Startup, spawn_test_units)
-            .add_systems(Update, handle_click);
+            .add_systems(Update, handle_click)
+            .add_systems(Update, move_units);
     }
 }
 
@@ -35,6 +36,7 @@ impl Default for MapSize {
 /// 当前选中的单位
 #[derive(Resource, Default)]
 pub struct Selection {
+    #[expect(dead_code)]
     pub entities: Vec<Entity>,
 }
 
@@ -45,6 +47,7 @@ pub struct Unit;
 /// 可移动单位标记
 #[derive(Component)]
 pub struct Movable {
+    #[expect(dead_code)]
     pub speed: f32,
     pub target: Option<Vec3>,
 }
