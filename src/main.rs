@@ -13,5 +13,6 @@ fn main() {
             ..default()
         }))
         .add_plugins(game::GamePlugin)
+        .add_plugins(game::network::NetworkPlugin)
         .run();
 }

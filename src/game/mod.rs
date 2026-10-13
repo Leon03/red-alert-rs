@@ -6,6 +6,7 @@ pub mod building;
 pub mod combat;
 pub mod economy;
 pub mod fog;
+pub mod network;
 pub mod obstacle;
 pub mod pathfinding;
 
