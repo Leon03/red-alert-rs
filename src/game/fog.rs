@@ -82,9 +82,9 @@ impl FogOfWar {
     /// Step simulation: Visible -> Explored, Explored stays, Unexplored stays.
     pub fn tick(&mut self) {
         for tile_state in &mut self.tiles {
-            *tile_state = match tile_state {
+            *tile_state = match *tile_state {
                 FogState::Visible => FogState::Explored,
-                other => *other,
+                other => other,
             };
         }
     }
