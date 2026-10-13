@@ -43,7 +43,8 @@ impl FogOfWar {
 
     pub fn set(&mut self, tile: (u32, u32), state: FogState) {
         if tile.0 < self.width && tile.1 < self.height {
-            self.tiles[self.index(tile)] = state;
+            let idx = self.index(tile);
+            self.tiles[idx] = state;
         }
     }
 
@@ -80,8 +81,8 @@ impl FogOfWar {
 
     /// Step simulation: Visible -> Explored, Explored stays, Unexplored stays.
     pub fn tick(&mut self) {
-        for tile in &mut self.tiles {
-            *tile = match tile {
+        for tile_state in &mut self.tiles {
+            *tile_state = match tile_state {
                 FogState::Visible => FogState::Explored,
                 other => *other,
             };
