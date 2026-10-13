@@ -1,6 +1,10 @@
 use bevy::prelude::*;
 
 /// Weapon type for different attack profiles.
+#[expect(
+    dead_code,
+    reason = "variants used in tests and future combat expansion"
+)]
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum WeaponType {
     MachineGun,
@@ -74,6 +78,7 @@ pub struct Attack {
 #[derive(Component)]
 pub struct Health {
     pub current: i32,
+    #[expect(dead_code)]
     pub max: i32,
 }
 
@@ -86,6 +91,7 @@ pub struct Projectile {
 }
 
 /// Unit type for determining weapon.
+#[expect(dead_code, reason = "will be used when unit production is implemented")]
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum UnitType {
     Infantry,
@@ -254,7 +260,7 @@ pub fn projectile_system(
     mut q_targets: Query<&mut Health>,
     mut commands: Commands,
 ) {
-    for (entity, mut transform, mut projectile) in q_projectiles.iter_mut() {
+    for (entity, mut transform, projectile) in q_projectiles.iter_mut() {
         let Ok(target_transform) = q_target_transforms.get(projectile.target) else {
             commands.entity(entity).despawn();
             continue;
