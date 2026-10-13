@@ -4,6 +4,7 @@ use bevy::window::PrimaryWindow;
 pub mod building;
 pub mod combat;
 pub mod economy;
+pub mod fog;
 pub mod obstacle;
 pub mod pathfinding;
 
@@ -43,7 +44,11 @@ impl Plugin for GamePlugin {
             .add_systems(Update, combat::target_acquisition_system)
             .add_systems(Update, combat::combat_system)
             .add_systems(Update, combat::projectile_system)
-            .add_systems(Update, combat::cleanup_dead_system);
+            .add_systems(Update, combat::cleanup_dead_system)
+            .add_systems(Startup, fog::init_fog_of_war)
+            .add_systems(Update, fog::update_fog_of_war)
+            .add_systems(Update, fog::render_fog_of_war)
+            .add_systems(Update, fog::add_vision_to_entities);
     }
 }
 
