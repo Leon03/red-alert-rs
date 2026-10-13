@@ -93,6 +93,7 @@ impl FogOfWar {
 /// Component for entities that provide vision.
 #[derive(Component)]
 pub struct VisionSource {
+    #[allow(dead_code)]
     pub range: f32,
 }
 
