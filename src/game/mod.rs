@@ -47,7 +47,6 @@ pub struct Unit;
 /// 可移动单位标记
 #[derive(Component)]
 pub struct Movable {
-    #[expect(dead_code)]
     pub speed: f32,
     pub target: Option<Vec3>,
 }
