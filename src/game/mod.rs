@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
 pub mod building;
+pub mod combat;
 pub mod economy;
 pub mod obstacle;
 pub mod pathfinding;
@@ -37,7 +38,12 @@ impl Plugin for GamePlugin {
             .add_systems(Update, building::building_placement_system)
             .add_systems(Update, building::build_queue_system)
             .add_systems(Update, building::building_progress_system)
-            .add_systems(Update, building::building_damage_system);
+            .add_systems(Update, building::building_damage_system)
+            .add_systems(Update, combat::equip_units)
+            .add_systems(Update, combat::target_acquisition_system)
+            .add_systems(Update, combat::combat_system)
+            .add_systems(Update, combat::projectile_system_v2)
+            .add_systems(Update, combat::cleanup_dead_system);
     }
 }
 
@@ -111,7 +117,7 @@ fn spawn_grid(mut commands: Commands, map: Res<MapSize>) {
 }
 
 fn spawn_test_units(mut commands: Commands) {
-    // 测试单位 - 红方
+    // 测试单位 - 红方 (玩家)
     for i in 0..5 {
         let x = 200.0 + i as f32 * 40.0;
         let y = 200.0;
@@ -124,6 +130,27 @@ fn spawn_test_units(mut commands: Commands) {
             SpriteBundle {
                 sprite: Sprite {
                     color: Color::srgb(0.9, 0.2, 0.1),
+                    custom_size: Some(Vec2::splat(24.0)),
+                    ..default()
+                },
+                transform: Transform::from_xyz(x, y, 1.0),
+                ..default()
+            },
+        ));
+    }
+    // 添加一些敌方单位用于测试战斗 (蓝方)
+    for i in 0..3 {
+        let x = 1000.0 + i as f32 * 40.0;
+        let y = 800.0;
+        commands.spawn((
+            Unit,
+            Movable {
+                speed: 60.0,
+                path: Vec::new(),
+            },
+            SpriteBundle {
+                sprite: Sprite {
+                    color: Color::srgb(0.1, 0.3, 0.9),
                     custom_size: Some(Vec2::splat(24.0)),
                     ..default()
                 },
