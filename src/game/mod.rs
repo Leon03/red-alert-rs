@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
+pub mod economy;
 pub mod obstacle;
 pub mod pathfinding;
 
@@ -14,12 +15,23 @@ impl Plugin for GamePlugin {
         app.init_resource::<MapSize>()
             .init_resource::<Selection>()
             .init_resource::<BlockedTiles>()
+            .init_resource::<economy::PlayerMoney>()
             .add_systems(Startup, spawn_camera)
             .add_systems(Startup, spawn_grid)
             .add_systems(Startup, spawn_test_units)
+            .add_systems(Startup, economy::spawn_ore_fields)
+            .add_systems(Startup, economy::spawn_refinery)
+            .add_systems(Startup, economy::spawn_harvesters)
+            .add_systems(Startup, economy::spawn_money_display)
             .add_systems(Update, handle_click)
             .add_systems(Update, move_units)
-            .add_systems(Update, update_blocked_tiles);
+            .add_systems(Update, update_blocked_tiles)
+            .add_systems(Update, economy::assign_harvesters)
+            .add_systems(Update, economy::harvester_navigation)
+            .add_systems(Update, economy::mining_system)
+            .add_systems(Update, economy::unloading_system)
+            .add_systems(Update, economy::refinery_processing)
+            .add_systems(Update, economy::update_money_display);
     }
 }
 
