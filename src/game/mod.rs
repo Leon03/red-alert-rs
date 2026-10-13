@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
+pub mod ai;
 pub mod building;
 pub mod combat;
 pub mod economy;
@@ -20,6 +21,7 @@ impl Plugin for GamePlugin {
             .init_resource::<BlockedTiles>()
             .init_resource::<economy::PlayerMoney>()
             .init_resource::<building::BuildQueue>()
+            .init_resource::<ai::AIPlayer>()
             .add_systems(Startup, spawn_camera)
             .add_systems(Startup, spawn_grid)
             .add_systems(Startup, spawn_test_units)
@@ -27,6 +29,7 @@ impl Plugin for GamePlugin {
             .add_systems(Startup, economy::spawn_refinery)
             .add_systems(Startup, economy::spawn_harvesters)
             .add_systems(Startup, economy::spawn_money_display)
+            .add_systems(Startup, ai::spawn_ai_player)
             .add_systems(Update, handle_click)
             .add_systems(Update, move_units)
             .add_systems(Update, update_blocked_tiles)
@@ -48,7 +51,12 @@ impl Plugin for GamePlugin {
             .add_systems(Startup, fog::init_fog_of_war)
             .add_systems(Update, fog::update_fog_of_war)
             .add_systems(Update, fog::render_fog_of_war)
-            .add_systems(Update, fog::add_vision_to_entities);
+            .add_systems(Update, fog::add_vision_to_entities)
+            .add_systems(Update, ai::ai_economy_system)
+            .add_systems(Update, ai::ai_building_system)
+            .add_systems(Update, ai::ai_unit_production_system)
+            .add_systems(Update, ai::ai_attack_system)
+            .add_systems(Update, ai::ai_scouting_system);
     }
 }
 
