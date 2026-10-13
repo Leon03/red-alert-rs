@@ -15,6 +15,7 @@ pub enum WeaponType {
 }
 
 impl WeaponType {
+    #[expect(dead_code)]
     pub fn damage(&self) -> i32 {
         match self {
             WeaponType::MachineGun => 25,
@@ -25,6 +26,7 @@ impl WeaponType {
         }
     }
 
+    #[expect(dead_code)]
     pub fn range(&self) -> f32 {
         match self {
             WeaponType::MachineGun => 120.0,
@@ -35,6 +37,7 @@ impl WeaponType {
         }
     }
 
+    #[expect(dead_code)]
     pub fn cooldown(&self) -> f32 {
         match self {
             WeaponType::MachineGun => 0.3,
@@ -45,6 +48,7 @@ impl WeaponType {
         }
     }
 
+    #[expect(dead_code)]
     pub fn projectile_speed(&self) -> f32 {
         match self {
             WeaponType::MachineGun => 400.0,
@@ -55,6 +59,7 @@ impl WeaponType {
         }
     }
 
+    #[expect(dead_code)]
     pub fn color(&self) -> Color {
         match self {
             WeaponType::MachineGun => Color::srgb(0.9, 0.9, 0.3),
@@ -101,6 +106,7 @@ pub enum UnitType {
 }
 
 impl UnitType {
+    #[expect(dead_code)]
     pub fn default_weapon(&self) -> WeaponType {
         match self {
             UnitType::Infantry => WeaponType::MachineGun,
@@ -110,6 +116,7 @@ impl UnitType {
         }
     }
 
+    #[expect(dead_code)]
     pub fn max_health(&self) -> i32 {
         match self {
             UnitType::Infantry => 50,
@@ -119,6 +126,7 @@ impl UnitType {
         }
     }
 
+    #[expect(dead_code)]
     pub fn speed(&self) -> f32 {
         match self {
             UnitType::Infantry => 60.0,
