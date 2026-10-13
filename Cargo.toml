@@ -1,0 +1,15 @@
+[package]
+name = "red-alert-rs"
+version = "0.1.0"
+edition = "2021"
+description = "A Red Alert 2 inspired RTS game built with Bevy"
+license = "MIT"
+
+[dependencies]
+bevy = "0.14"
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
