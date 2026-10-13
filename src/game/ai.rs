@@ -20,6 +20,7 @@ pub enum AIDifficulty {
     #[default]
     Easy,
     Medium,
+    #[allow(dead_code)]
     Hard,
 }
 
@@ -72,8 +73,6 @@ pub fn spawn_ai_player(mut commands: Commands) {
 
 /// System: AI economic management - build harvesters, refineries.
 pub fn ai_economy_system(
-    time: Res<Time>,
-    mut ai: ResMut<AIPlayer>,
     money: Res<PlayerMoney>,
     q_harvesters: Query<&Harvester>,
     q_refineries: Query<(&Refinery, &Transform)>,
@@ -203,7 +202,7 @@ fn find_ai_building_spot(
     let (w, h) = building_type.size_tiles();
 
     // Try spots near existing buildings first
-    for (_, building_transform) in q_buildings.iter() {
+    for (_building, _) in q_buildings.iter() {
         // We'd need Transform in the query - simplified
     }
 
@@ -269,7 +268,7 @@ pub fn ai_unit_production_system(
         .unwrap_or_else(|| Vec3::new(1000.0, 800.0, 0.0));
 
     // Alternate between tank and infantry
-    let is_tank = ai.build_order_index % 2 == 0;
+    let is_tank = ai.build_order_index.is_multiple_of(2);
     ai.build_order_index += 1;
 
     if is_tank && money.amount >= 800 {
