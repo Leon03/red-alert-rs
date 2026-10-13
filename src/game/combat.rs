@@ -1,4 +1,3 @@
-use crate::game::MapSize;
 use bevy::prelude::*;
 
 /// Weapon type for different attack profiles.
@@ -48,7 +47,7 @@ impl WeaponType {
             WeaponType::Cannon => 300.0,
             WeaponType::Missile => 200.0,
             WeaponType::Laser => 1000.0,
-            WeaponType::Flame => 0.0, // instant
+            WeaponType::Flame => 0.0,
         }
     }
 
@@ -84,7 +83,6 @@ pub struct Projectile {
     pub target: Entity,
     pub damage: i32,
     pub speed: f32,
-    pub weapon_type: WeaponType,
 }
 
 /// Unit type for determining weapon.
@@ -125,15 +123,12 @@ impl UnitType {
     }
 }
 
-/// Add Attack and Health components to existing units based on type.
+/// Add Attack and Health components to existing units.
 pub fn equip_units(
     mut commands: Commands,
     q_units: Query<(Entity, &crate::game::Unit), Without<Attack>>,
 ) {
-    // In a real game, units would have UnitType stored
-    // For now, assign based on existing components
     for (entity, _) in q_units.iter() {
-        // Determine unit type from existing components
         commands.entity(entity).insert((
             Attack {
                 weapon_type: WeaponType::MachineGun,
@@ -151,20 +146,17 @@ pub fn equip_units(
 /// System: Find targets for units with Attack component.
 pub fn target_acquisition_system(
     mut q_attackers: Query<(
-        Entity,
         &mut Attack,
         &Transform,
         Option<&crate::game::economy::Harvester>,
     )>,
     q_targets: Query<(Entity, &Transform, &Health), Without<crate::game::economy::Harvester>>,
 ) {
-    for (entity, mut attack, transform, harvester) in q_attackers.iter_mut() {
-        // Harvesters don't attack
+    for (mut attack, transform, harvester) in q_attackers.iter_mut() {
         if harvester.is_some() {
             continue;
         }
 
-        // If current target is dead or out of range, find new target
         let mut need_new_target = true;
         if let Some(target_entity) = attack.target {
             if let Ok((_, target_transform, target_health)) = q_targets.get(target_entity) {
@@ -176,17 +168,14 @@ pub fn target_acquisition_system(
         }
 
         if need_new_target {
-            // Find nearest valid target
             let mut best: Option<(Entity, f32)> = None;
             for (target_entity, target_transform, target_health) in q_targets.iter() {
                 if target_health.current <= 0 {
                     continue;
                 }
                 let dist = transform.translation.distance(target_transform.translation);
-                if dist <= attack.weapon_type.range() {
-                    if best.map_or(true, |(_, d)| dist < d) {
-                        best = Some((target_entity, dist));
-                    }
+                if dist <= attack.weapon_type.range() && best.is_none_or(|(_, d)| dist < d) {
+                    best = Some((target_entity, dist));
                 }
             }
             attack.target = best.map(|(e, _)| e);
@@ -197,14 +186,11 @@ pub fn target_acquisition_system(
 /// System: Fire weapons at targets.
 pub fn combat_system(
     time: Res<Time>,
-    mut q_attackers: Query<
-        (Entity, &mut Attack, &Transform),
-        Without<crate::game::economy::Harvester>,
-    >,
+    mut q_attackers: Query<(&mut Attack, &Transform), Without<crate::game::economy::Harvester>>,
     q_targets: Query<(&Transform, &Health)>,
     mut commands: Commands,
 ) {
-    for (entity, mut attack, transform) in q_attackers.iter_mut() {
+    for (mut attack, transform) in q_attackers.iter_mut() {
         attack.cooldown_timer -= time.delta_seconds();
 
         if attack.cooldown_timer > 0.0 {
@@ -235,14 +221,12 @@ pub fn combat_system(
         let weapon = attack.weapon_type;
         attack.cooldown_timer = weapon.cooldown();
 
-        // Spawn projectile or apply instant damage
         if weapon.projectile_speed() > 0.0 {
             commands.spawn((
                 Projectile {
                     target: target_entity,
                     damage: weapon.damage(),
                     speed: weapon.projectile_speed(),
-                    weapon_type: weapon,
                 },
                 SpriteBundle {
                     sprite: Sprite {
@@ -258,41 +242,12 @@ pub fn combat_system(
                     ..default()
                 },
             ));
-        } else {
-            // Instant hit (laser, flame)
-            // Damage applied in projectile system
         }
     }
 }
 
 /// System: Move projectiles and apply damage on hit.
 pub fn projectile_system(
-    time: Res<Time>,
-    mut q_projectiles: Query<(Entity, &mut Transform, &mut Projectile)>,
-    mut q_targets: Query<&mut Health>,
-    mut commands: Commands,
-) {
-    for (entity, mut transform, mut projectile) in q_projectiles.iter_mut() {
-        let Ok(mut target_health) = q_targets.get_mut(projectile.target) else {
-            commands.entity(entity).despawn();
-            continue;
-        };
-
-        let target_pos = q_targets
-            .get(projectile.target)
-            .map(|h| {
-                // We need Transform for position
-                Vec3::ZERO
-            })
-            .unwrap_or(Vec3::ZERO);
-
-        // Need to get target position - re-query
-        // In real code, we'd query Transform separately
-    }
-}
-
-/// Improved projectile system with separate Transform query.
-pub fn projectile_system_v2(
     time: Res<Time>,
     mut q_projectiles: Query<(Entity, &mut Transform, &mut Projectile)>,
     q_target_transforms: Query<&Transform>,
@@ -310,28 +265,16 @@ pub fn projectile_system_v2(
             continue;
         };
 
-        let target_pos = target_transform.translation;
-        let direction = target_pos - transform.translation;
+        let direction = target_transform.translation - transform.translation;
         let distance = direction.length();
 
         if distance <= 10.0 {
-            // Hit!
             target_health.current = (target_health.current - projectile.damage).max(0);
             commands.entity(entity).despawn();
         } else {
             let step = direction.normalize() * projectile.speed * time.delta_seconds();
             transform.translation += step;
         }
-    }
-}
-
-/// System: Handle unit death.
-pub fn death_system(
-    mut commands: Commands,
-    q_dead: Query<Entity, (With<Health>, Without<crate::game::economy::Harvester>)>,
-) {
-    for entity in q_dead.iter() {
-        // Could check health here, but we despawn in health check
     }
 }
 
@@ -344,19 +287,6 @@ pub fn cleanup_dead_system(mut commands: Commands, q_entities: Query<(Entity, &H
     }
 }
 
-/// System: Building repair (Service Depot mechanic).
-pub fn repair_system(
-    time: Res<Time>,
-    mut q_buildings: Query<&mut Health, With<crate::game::building::Building>>,
-    q_service_depots: Query<&Transform, With<crate::game::building::Building>>,
-) {
-    // Service depots slowly repair nearby friendly buildings
-    // Simplified: just pass
-    let _ = time;
-    let _ = q_buildings;
-    let _ = q_service_depots;
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -366,6 +296,7 @@ mod tests {
         assert_eq!(WeaponType::MachineGun.damage(), 25);
         assert_eq!(WeaponType::Cannon.range(), 180.0);
         assert_eq!(WeaponType::Missile.cooldown(), 3.0);
+        assert_eq!(WeaponType::Laser.projectile_speed(), 1000.0);
     }
 
     #[test]

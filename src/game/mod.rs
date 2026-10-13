@@ -42,7 +42,7 @@ impl Plugin for GamePlugin {
             .add_systems(Update, combat::equip_units)
             .add_systems(Update, combat::target_acquisition_system)
             .add_systems(Update, combat::combat_system)
-            .add_systems(Update, combat::projectile_system_v2)
+            .add_systems(Update, combat::projectile_system)
             .add_systems(Update, combat::cleanup_dead_system);
     }
 }
