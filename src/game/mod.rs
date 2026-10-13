@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 
 pub struct GamePlugin;
 
@@ -49,8 +50,8 @@ pub struct Movable {
 }
 
 fn spawn_camera(mut commands: Commands, map: Res<MapSize>) {
-    let offset_x = map.width as f32 * map.tile_size / 2.0;
-    let offset_y = map.height as f32 * map.tile_size / 2.0;
+    let offset_x = map.width as f32 * map.tile_size / 2.0_f32;
+    let offset_y = map.height as f32 * map.tile_size / 2.0_f32;
     commands.spawn(Camera2dBundle {
         transform: Transform::from_xyz(offset_x, offset_y, 1000.0),
         ..default()
@@ -59,12 +60,12 @@ fn spawn_camera(mut commands: Commands, map: Res<MapSize>) {
 
 fn spawn_grid(mut commands: Commands, map: Res<MapSize>) {
     let tile = map.tile_size;
-    let color = Color::rgb(0.15, 0.18, 0.12);
+    let color = Color::srgb(0.15, 0.18, 0.12);
     for x in 0..map.width {
         for y in 0..map.height {
             let pos = Vec3::new(
-                x as f32 * tile + tile / 2.0,
-                y as f32 * tile + tile / 2.0,
+                x as f32 * tile + tile / 2.0_f32,
+                y as f32 * tile + tile / 2.0_f32,
                 0.0,
             );
             commands.spawn(SpriteBundle {
@@ -93,7 +94,7 @@ fn spawn_test_units(mut commands: Commands) {
             },
             SpriteBundle {
                 sprite: Sprite {
-                    color: Color::rgb(0.9, 0.2, 0.1),
+                    color: Color::srgb(0.9, 0.2, 0.1),
                     custom_size: Some(Vec2::splat(24.0)),
                     ..default()
                 },
