@@ -59,3 +59,28 @@ jobs:
             libegl1-mesa-dev
       - name: Test
         run: cargo test --all
+
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install Linux deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libasound2-dev \
+            libudev-dev \
+            pkg-config \
+            libx11-dev \
+            libxi-dev \
+            libgl1-mesa-dev \
+            libegl1-mesa-dev
+      - name: Build release
+        run: cargo build --release
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: red-alert-rs-linux
+          path: target/release/red-alert-rs
