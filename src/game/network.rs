@@ -5,7 +5,9 @@ use bevy::prelude::*;
 pub enum NetworkRole {
     #[default]
     Standalone,
+    #[allow(dead_code)]
     Server,
+    #[allow(dead_code)]
     Client,
 }
 
@@ -29,10 +31,12 @@ impl Default for NetworkConfig {
 
 /// Component marking entities that should be replicated to clients.
 #[derive(Component, Default)]
+#[allow(dead_code)]
 pub struct Replicate;
 
 /// Component tracking which client owns an entity.
 #[derive(Component, Default)]
+#[allow(dead_code)]
 pub struct Owner {
     pub client_id: u64,
 }
