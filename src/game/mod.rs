@@ -100,10 +100,9 @@ pub struct Movable {
 }
 
 fn spawn_camera(mut commands: Commands, map: Res<MapSize>) {
-    let offset_x = map.width as f32 * map.tile_size / 2.0_f32;
-    let offset_y = map.height as f32 * map.tile_size / 2.0_f32;
+    // Camera centered on player starting area (near red units at ~200, 200)
     commands.spawn(Camera2dBundle {
-        transform: Transform::from_xyz(offset_x, offset_y, 1000.0),
+        transform: Transform::from_xyz(300.0, 300.0, 1000.0),
         ..default()
     });
 }
