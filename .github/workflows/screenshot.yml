@@ -56,11 +56,13 @@ jobs:
             fi
             sleep 1
           done
-          if [ -z "$GAME_WINDOW" ]; then
-            echo "Game window not found after 30s"
+          # Give the game a few more seconds to render frames
+          sleep 5
+          # Use ffmpeg to capture the X11 display (better for OpenGL content)
+          ffmpeg -f x11grab -video_size 1280x720 -i :99 -frames 1 /tmp/screenshot.png -y 2>&1 || true
+          if [ ! -s /tmp/screenshot.png ] || [ "$(stat -c%s /tmp/screenshot.png)" -lt 1000 ]; then
+            echo "ffmpeg failed or too small, trying import"
             import -window root /tmp/screenshot.png
-          else
-            import -window "$GAME_WINDOW" /tmp/screenshot.png
           fi
           ls -la /tmp/screenshot.png
           kill $GAME_PID 2>/dev/null || true
