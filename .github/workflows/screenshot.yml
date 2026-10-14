@@ -1,0 +1,49 @@
+name: Screenshot
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "Cargo.toml"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  screenshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install Linux deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libasound2-dev \
+            libudev-dev \
+            pkg-config \
+            libx11-dev \
+            libxi-dev \
+            libgl1-mesa-dev \
+            libegl1-mesa-dev \
+            xvfb \
+            imagemagick
+      - name: Build
+        run: cargo build --release
+      - name: Run game and capture screenshot
+        run: |
+          Xvfb :99 -screen 0 1280x720x24 &
+          export DISPLAY=:99
+          sleep 2
+          timeout 5 ./target/release/red-alert-rs || true
+          sleep 1
+          import -window root /tmp/screenshot.png
+          ls -la /tmp/screenshot.png
+      - name: Upload screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-screenshot
+          path: /tmp/screenshot.png
