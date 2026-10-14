@@ -36,7 +36,8 @@ jobs:
             libxrandr2 \
             ffmpeg \
             python3-xlib \
-            python3-pil
+            python3-pil \
+            xdotool
       - name: Build
         run: cargo build --release
       - name: Run game and capture screenshot
@@ -47,10 +48,14 @@ jobs:
           ./target/release/red-alert-rs &
           GAME_PID=$!
           sleep 8
-          # Try ffmpeg first (better color fidelity)
-          ffmpeg -f x11grab -video_size 1280x720 -i :99 -frames 1 /tmp/screenshot.png -y 2>&1 || true
-          if [ ! -s /tmp/screenshot.png ]; then
-            echo "ffmpeg failed, trying import"
+          # Find the game window and capture it
+          echo "Looking for game window..."
+          GAME_WINDOW=$(xdotool search --name "Red Alert RS" 2>/dev/null | head -1)
+          if [ -n "$GAME_WINDOW" ]; then
+            echo "Found game window: $GAME_WINDOW"
+            import -window "$GAME_WINDOW" /tmp/screenshot.png
+          else
+            echo "Game window not found, trying root window"
             import -window root /tmp/screenshot.png
           fi
           ls -la /tmp/screenshot.png
