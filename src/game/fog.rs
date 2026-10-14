@@ -142,7 +142,7 @@ pub fn render_fog_of_war(
             let pos = Vec3::new(
                 x as f32 * tile + tile / 2.0,
                 y as f32 * tile + tile / 2.0,
-                5.0, // Above map, below units
+                0.5, // Below units (z=1.0), above map (z=0.0)
             );
             commands.spawn((
                 FogTile,
