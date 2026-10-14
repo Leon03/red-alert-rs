@@ -134,8 +134,8 @@ pub fn render_fog_of_war(
         for y in 0..map.height {
             let state = fog.get((x, y));
             let (color, alpha) = match state {
-                FogState::Unexplored => (Color::srgb(0.0, 0.0, 0.0), 0.95),
-                FogState::Explored => (Color::srgb(0.1, 0.1, 0.1), 0.6),
+                FogState::Unexplored => (Color::srgb(0.0, 0.0, 0.0), 0.7),
+                FogState::Explored => (Color::srgb(0.15, 0.15, 0.15), 0.4),
                 FogState::Visible => continue, // Don't render fog on visible tiles
             };
 
