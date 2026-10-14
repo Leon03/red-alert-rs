@@ -47,15 +47,29 @@ jobs:
           sleep 2
           ./target/release/red-alert-rs &
           GAME_PID=$!
-          sleep 8
-          # Find the game window and capture it
+          sleep 10
+          # Find the game window
           echo "Looking for game window..."
           GAME_WINDOW=$(xdotool search --name "Red Alert RS" 2>/dev/null | head -1)
           if [ -n "$GAME_WINDOW" ]; then
             echo "Found game window: $GAME_WINDOW"
+            xdotool getwindowgeometry "$GAME_WINDOW"
+            xwininfo -id "$GAME_WINDOW"
+          else
+            echo "Game window not found"
+          fi
+          # List all windows
+          echo "All windows:"
+          xdotool search "" 2>/dev/null | while read w; do
+            name=$(xdotool getwindowname "$w" 2>/dev/null || echo "unnamed")
+            geom=$(xdotool getwindowgeometry "$w" 2>/dev/null | grep Geometry | awk '{print $2}')
+            echo "  $w: $name $geom"
+          done
+          
+          # Capture
+          if [ -n "$GAME_WINDOW" ]; then
             import -window "$GAME_WINDOW" /tmp/screenshot.png
           else
-            echo "Game window not found, trying root window"
             import -window root /tmp/screenshot.png
           fi
           ls -la /tmp/screenshot.png
