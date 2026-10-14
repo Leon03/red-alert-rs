@@ -97,16 +97,46 @@ pub struct VisionSource {
     pub range: f32,
 }
 
-/// System: Initialize fog of war.
+/// System: Initialize fog of war and render initial fog.
 pub fn init_fog_of_war(mut commands: Commands, map: Res<MapSize>) {
     commands.insert_resource(FogOfWar::new(map.width, map.height));
+    // Render initial fog (all unexplored)
+    render_fog_of_war_static(commands, map);
 }
 
-/// System: Update fog of war based on vision sources.
+/// Render fog of war as a grid overlay (static version for startup).
+fn render_fog_of_war_static(mut commands: Commands, map: Res<MapSize>) {
+    let tile = map.tile_size;
+    for x in 0..map.width {
+        for y in 0..map.height {
+            let pos = Vec3::new(
+                x as f32 * tile + tile / 2.0,
+                y as f32 * tile + tile / 2.0,
+                0.5, // Below units (z=1.0), above map (z=0.0)
+            );
+            commands.spawn((
+                FogTile,
+                SpriteBundle {
+                    sprite: Sprite {
+                        color: Color::srgb(0.0, 0.0, 0.0).with_alpha(0.7),
+                        custom_size: Some(Vec2::splat(tile)),
+                        ..default()
+                    },
+                    transform: Transform::from_translation(pos),
+                    ..default()
+                },
+            ));
+        }
+    }
+}
+
+/// System: Update fog of war based on vision sources and re-render changed tiles.
 pub fn update_fog_of_war(
+    mut commands: Commands,
     mut fog: ResMut<FogOfWar>,
     q_vision: Query<&Transform, With<VisionSource>>,
     map: Res<MapSize>,
+    q_fog_tiles: Query<(Entity, &Transform), With<FogTile>>,
 ) {
     // First, decay all visible to explored
     fog.tick();
@@ -115,17 +145,10 @@ pub fn update_fog_of_war(
     for transform in q_vision.iter() {
         fog.reveal_circle(transform.translation, 200.0, map.tile_size);
     }
-}
 
-/// System: Render fog of war as a grid overlay.
-pub fn render_fog_of_war(
-    mut commands: Commands,
-    fog: Res<FogOfWar>,
-    map: Res<MapSize>,
-    q_existing: Query<Entity, With<FogTile>>,
-) {
+    // Re-render only changed tiles (simplified: re-render all for now)
     // Despawn old fog tiles
-    for entity in q_existing.iter() {
+    for (entity, _) in q_fog_tiles.iter() {
         commands.entity(entity).despawn();
     }
 
