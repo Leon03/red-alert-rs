@@ -33,7 +33,10 @@ jobs:
             imagemagick \
             libxkbcommon-x11-0 \
             libxcursor1 \
-            libxrandr2
+            libxrandr2 \
+            ffmpeg \
+            python3-xlib \
+            python3-pil
       - name: Build
         run: cargo build --release
       - name: Run game and capture screenshot
@@ -43,8 +46,13 @@ jobs:
           sleep 2
           ./target/release/red-alert-rs &
           GAME_PID=$!
-          sleep 4
-          import -window root /tmp/screenshot.png
+          sleep 5
+          # Try ffmpeg first (better color fidelity)
+          ffmpeg -f x11grab -video_size 1280x720 -i :99 -frames 1 /tmp/screenshot.png -y 2>&1 || true
+          if [ ! -s /tmp/screenshot.png ]; then
+            echo "ffmpeg failed, trying import"
+            import -window root /tmp/screenshot.png
+          fi
           ls -la /tmp/screenshot.png
           kill $GAME_PID 2>/dev/null || true
       - name: Upload screenshot
