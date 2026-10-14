@@ -263,9 +263,9 @@ pub fn combat_system(
 /// System: Move projectiles and apply damage on hit.
 pub fn projectile_system(
     time: Res<Time>,
-    mut q_projectiles: Query<(Entity, &mut Transform, &mut Projectile)>,
-    q_target_transforms: Query<&Transform>,
-    mut q_targets: Query<&mut Health>,
+    mut q_projectiles: Query<(Entity, &mut Transform, &Projectile)>,
+    q_target_transforms: Query<&Transform, Without<Projectile>>,
+    mut q_targets: Query<&mut Health, Without<Projectile>>,
     mut commands: Commands,
 ) {
     for (entity, mut transform, projectile) in q_projectiles.iter_mut() {
