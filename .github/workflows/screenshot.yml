@@ -47,22 +47,20 @@ jobs:
           sleep 2
           ./target/release/red-alert-rs &
           GAME_PID=$!
-          sleep 10
-          # Find the game window
-          echo "Looking for game window..."
-          GAME_WINDOW=$(xdotool search --name "Red Alert RS" 2>/dev/null | head -1)
-          if [ -n "$GAME_WINDOW" ]; then
-            echo "Found game window: $GAME_WINDOW"
-            xdotool getwindowgeometry "$GAME_WINDOW"
-          else
-            echo "Game window not found"
-          fi
-          
-          # Capture
-          if [ -n "$GAME_WINDOW" ]; then
-            import -window "$GAME_WINDOW" /tmp/screenshot.png
-          else
+          # Wait for game window to appear (software rendering is slow)
+          for i in {1..30}; do
+            GAME_WINDOW=$(xdotool search --name "Red Alert RS" 2>/dev/null | head -1)
+            if [ -n "$GAME_WINDOW" ]; then
+              echo "Found game window: $GAME_WINDOW"
+              break
+            fi
+            sleep 1
+          done
+          if [ -z "$GAME_WINDOW" ]; then
+            echo "Game window not found after 30s"
             import -window root /tmp/screenshot.png
+          else
+            import -window "$GAME_WINDOW" /tmp/screenshot.png
           fi
           ls -la /tmp/screenshot.png
           kill $GAME_PID 2>/dev/null || true
