@@ -76,7 +76,10 @@ jobs:
             libx11-dev \
             libxi-dev \
             libgl1-mesa-dev \
-            libegl1-mesa-dev
+            libegl1-mesa-dev \
+            libxkbcommon-x11-0 \
+            libxcursor1 \
+            libxrandr2
       - name: Build release
         run: cargo build --release
       - name: Upload Linux binary
