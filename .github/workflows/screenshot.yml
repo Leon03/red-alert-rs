@@ -46,7 +46,7 @@ jobs:
           sleep 2
           ./target/release/red-alert-rs &
           GAME_PID=$!
-          sleep 5
+          sleep 8
           # Try ffmpeg first (better color fidelity)
           ffmpeg -f x11grab -video_size 1280x720 -i :99 -frames 1 /tmp/screenshot.png -y 2>&1 || true
           if [ ! -s /tmp/screenshot.png ]; then
