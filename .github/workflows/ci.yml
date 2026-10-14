@@ -79,8 +79,22 @@ jobs:
             libegl1-mesa-dev
       - name: Build release
         run: cargo build --release
-      - name: Upload binary
+      - name: Upload Linux binary
         uses: actions/upload-artifact@v4
         with:
           name: red-alert-rs-linux
           path: target/release/red-alert-rs
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build release
+        run: cargo build --release
+      - name: Upload Windows binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: red-alert-rs-windows
+          path: target/release/red-alert-rs.exe
